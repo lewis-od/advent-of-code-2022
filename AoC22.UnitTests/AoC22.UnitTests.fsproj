@@ -28,6 +28,7 @@
         <Content Include="Day5\test-input.txt">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
+        <Compile Include="Day6\Day6Tests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
