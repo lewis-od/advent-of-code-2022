@@ -28,15 +28,15 @@ module Motion =
             | _ -> failwith $"Unknown direction ${direction}"
         motion direction distance
     
+    let movePositionOneStep (direction: Direction) ((x, y): Position): Position =
+        match direction with
+            | Left -> (x - 1, y)
+            | Right -> (x + 1, y)
+            | Up -> (x, y + 1)
+            | Down -> (x, y - 1)
+    
     let private moveHeadOneStep ((head, tail): Rope) (direction: Direction): Rope =
-        let operation =
-            match direction with
-            | Left -> (fun (x, y) -> (x - 1, y))
-            | Right -> (fun (x, y) -> (x + 1, y))
-            | Up -> (fun (x, y) -> (x, y + 1))
-            | Down -> (fun (x, y) -> (x, y - 1))
-
-        (operation head, tail)
+        (movePositionOneStep direction head, tail)
     
     let private moveTailAdjacent ((head, tail): Rope): Rope =
         let dx = (fst head) - (fst tail)
@@ -60,7 +60,7 @@ module Motion =
         let dy = (snd head) - (snd tail)
         (abs dx) + (abs dy)
     
-    let private updateTail (rope: Rope) =
+    let updateTail (rope: Rope) =
         let (headX, headY), (tailX, tailY) = rope
         if headX <> tailX && headY <> tailY && (headTailDistance rope) > 2 then moveTailDiagonally rope
         else moveTailAdjacent rope
@@ -89,15 +89,60 @@ let countDistinctTailPositions (motions: Motion.Direction seq) =
     |> Seq.map snd
     |> Set.ofSeq
     |> Seq.length
-    
-let parseMotionsAndCountPositions (input: string seq) =
+
+let parseMotions (input: string seq) =
     input
     |> Seq.map Motion.parse
     |> Motion.toDirections
+ 
+let parseMotionsAndCountPositions (input: string seq) =
+    input
+    |> parseMotions
     |> countDistinctTailPositions
 
 let part1 () =
     let answer =
         System.IO.File.ReadLines "Day9/input.txt"
         |> parseMotionsAndCountPositions
+    printfn $"Answer: {answer}"
+
+let moveLongRopeInDirection (direction: Motion.Direction) (knots: Position list) =
+    let updatedHead =
+        knots
+        |> List.head
+        |> Motion.movePositionOneStep direction
+
+    let folder (head: Position) (current: Position) =
+        let newTail = Motion.updateTail (head, current) |> snd
+        (newTail, newTail)
+    
+    knots
+    |> List.skip 1
+    |> List.mapFold folder updatedHead
+    |> fst
+    |> fun knots -> updatedHead::knots
+
+
+let parseAndMoveLongRope (input: string seq) =
+    let knots = List.init 10 (fun _ -> (0, 0))
+    
+    let folder ((knots, tailPositions): Position list * Set<Position>) (direction: Motion.Direction) =
+        let newKnots = (direction, knots) ||> moveLongRopeInDirection
+        let tailPos =
+            newKnots
+            |> List.rev
+            |> List.head
+        (newKnots, Set.add tailPos tailPositions)
+
+    input
+    |> parseMotions
+    |> Seq.fold folder (knots, Set.empty<Position>)
+    |> snd
+    |> Set.count
+
+
+let part2 () =
+    let answer =
+        System.IO.File.ReadLines "Day9/input.txt"
+        |> parseAndMoveLongRope
     printfn $"Answer: {answer}"

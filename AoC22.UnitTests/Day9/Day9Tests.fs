@@ -85,3 +85,24 @@ type Day9Tests () =
            System.IO.File.ReadLines "Day9/test-input.txt"
            |> parseMotionsAndCountPositions
        Assert.AreEqual(13, numPositions)
+       
+    [<Test>]
+    member this.``should move all sections of rope`` () =
+        let knots = [(5, 0); (4, 0); (3, 0); (2, 0)]
+        let updated = moveLongRopeInDirection Motion.Right knots
+        let expected = [(6, 0); (5, 0); (4, 0); (3, 0)]
+        Assert.That(updated, Is.EquivalentTo(expected))
+        
+    [<Test>]
+    member this.``should count distinct tail positions for long rope`` () =
+       let numPositions =
+           System.IO.File.ReadLines "Day9/test-input.txt"
+           |> parseAndMoveLongRope
+       Assert.AreEqual(1, numPositions)
+       
+    [<Test>]
+    member this.``should count distinct tail positions for long rope with more movements`` () =
+       let numPositions =
+           System.IO.File.ReadLines "Day9/test-input2.txt"
+           |> parseAndMoveLongRope
+       Assert.AreEqual(36, numPositions)
